@@ -8,7 +8,7 @@ It is a working, self-contained SIEM-style application: a FastAPI backend, a Pos
 
 **Live demo:** https://sentinel-security-platform.onrender.com (choose "Explore the live demo" for a read-only account; the free server can take up to a minute to wake after a quiet period)
 
-[![CI](https://github.com/soniaineza/sentinel-security-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/soniaineza/sentinel-security-platform/actions/workflows/ci.yml)
+[![CI](https://github.com/leonce12/sentinel-security-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/leonce12/sentinel-security-platform/actions/workflows/ci.yml)
 
 ![Sentinel dashboard](docs/screenshots/dashboard.png)
 
@@ -148,7 +148,7 @@ These are captures of the running application with the synthetic dataset loaded 
 Requirements: Docker Desktop or Docker Engine with Compose v2.
 
 ```bash
-git clone https://github.com/soniaineza/sentinel-security-platform.git
+git clone https://github.com/leonce12/sentinel-security-platform.git
 cd sentinel-security-platform
 cp .env.example .env
 # Edit .env: set POSTGRES_PASSWORD and SENTINEL_SECRET_KEY to real random values.

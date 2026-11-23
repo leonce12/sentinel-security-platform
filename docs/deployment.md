@@ -37,7 +37,7 @@ flowchart LR
 ### Steps
 
 1. **Neon**: create a project (PostgreSQL 16 or 17, region AWS Europe Frankfurt) and copy the connection string. Keep it out of chat, email and Git.
-2. **Render**: New > Blueprint, connect the GitHub repository `soniaineza/sentinel-security-platform`. Render reads `render.yaml`.
+2. **Render**: New > Blueprint, connect the GitHub repository `leonce12/sentinel-security-platform`. Render reads `render.yaml`.
 3. Render asks for the values marked `sync: false`:
    - `SENTINEL_DATABASE_URL`: the Neon connection string (the `postgresql://` form works as is).
    - `SENTINEL_BOOTSTRAP_ADMIN_USERNAME`, `_EMAIL`, `_PASSWORD`: your administrator account. The password must be 12+ characters with three of lowercase, uppercase, digit, symbol, and must not contain the username.

@@ -9,7 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useApi } from "../hooks/useApi";
 import { api, errorMessage } from "../services/api";
 
-const REPO_URL = "https://github.com/soniaineza/sentinel-security-platform";
+const REPO_URL = "https://github.com/leonce12/sentinel-security-platform";
 
 const FEATURES = [
   { icon: Activity, title: "Log ingestion", text: "CSV, JSON and API ingestion with validation, UTC normalization, duplicate detection and a report of every rejected record." },
@@ -125,7 +125,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>Sentinel · built by Ineza Sonia · MIT License</span>
           <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-ink">
-            github.com/soniaineza/sentinel-security-platform <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            github.com/leonce12/sentinel-security-platform <ExternalLink className="h-3.5 w-3.5" aria-hidden />
           </a>
         </div>
       </footer>
