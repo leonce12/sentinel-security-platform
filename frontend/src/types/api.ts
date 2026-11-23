@@ -27,6 +27,7 @@ export interface Me {
   last_login_at: string | null;
   created_at: string;
   permissions: string[];
+  is_demo?: boolean;
 }
 
 export interface UserRow {

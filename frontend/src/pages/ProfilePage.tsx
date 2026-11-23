@@ -30,6 +30,21 @@ export default function ProfilePage() {
   }
 
   if (!user) return null;
+  if (user.is_demo) {
+    return (
+      <div>
+        <PageHeader title="Demo account" />
+        <Card title="Read-only demo">
+          <p className="text-sm text-ink-muted">
+            You are signed in to the shared demo account with the Read-Only Viewer role. You can explore the dashboard,
+            security events, alerts, incidents, detection rules and reports. Changes, uploads and administrative pages
+            are not available, and the backend refuses them even if requested directly.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-1">{user.permissions.map((p) => <span key={p} className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-ink-muted">{p}</span>)}</div>
+        </Card>
+      </div>
+    );
+  }
   return (
     <div>
       <PageHeader title="Your profile" />

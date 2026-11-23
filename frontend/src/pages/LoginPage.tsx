@@ -1,6 +1,6 @@
 import { Lock, Shield } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { Button, Field, InlineError, Input } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
@@ -60,6 +60,9 @@ export default function LoginPage() {
         </form>
         <p className="mt-6 text-center text-xs text-ink-faint">
           Authorized use only. Sign-in attempts are recorded in the audit log.
+        </p>
+        <p className="mt-3 text-center text-sm">
+          <Link to="/" className="text-ink-muted hover:text-ink">Back to the Sentinel home page</Link>
         </p>
       </div>
     </div>

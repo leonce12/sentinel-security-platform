@@ -92,7 +92,7 @@ export function AppLayout() {
           <Link to="/profile" className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-surface-2">
             <UserCog className="h-4 w-4 text-ink-muted" aria-hidden />
             <span className="hidden sm:inline">{user?.full_name || user?.username}</span>
-            <span className="hidden rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-muted md:inline">{user?.role_display_name}</span>
+            <span className="hidden rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-muted md:inline">{user?.is_demo ? "Demo (read-only)" : user?.role_display_name}</span>
           </Link>
           <button type="button" onClick={logout} className="rounded-md p-2 text-ink-muted hover:bg-surface-2 hover:text-ink" aria-label="Sign out" title="Sign out">
             <LogOut className="h-4 w-4" />

@@ -7,12 +7,25 @@ interface AuthState {
   user: Me | null;
   ready: boolean;
   login: (username: string, password: string) => Promise<void>;
+  loginDemo: () => Promise<void>;
   logout: () => Promise<void>;
   reloadUser: () => Promise<void>;
   can: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
+
+// Set by the server next to the HttpOnly refresh cookie. It holds no secret; it only says
+// whether trying to restore a session is worthwhile, so new visitors do not get a 401.
+const SESSION_MARKER = "sentinel_session";
+
+export function hasSessionMarker(): boolean {
+  return document.cookie.split(";").some((c) => c.trim().startsWith(`${SESSION_MARKER}=`));
+}
+
+function clearSessionMarker() {
+  document.cookie = `${SESSION_MARKER}=; Max-Age=0; path=/; SameSite=Strict`;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Me | null>(null);
@@ -22,15 +35,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await api.get<Me>("/auth/me"));
   }, []);
 
-  // On first load, try to restore the session from the HttpOnly refresh cookie.
+  // On first load, restore the session from the HttpOnly refresh cookie if one may exist.
   useEffect(() => {
-    setSessionExpiredHandler(() => setUser(null));
+    setSessionExpiredHandler(() => {
+      clearSessionMarker();
+      setUser(null);
+    });
     (async () => {
-      if (await refreshSession()) {
-        try {
-          await reloadUser();
-        } catch {
-          setUser(null);
+      if (hasSessionMarker()) {
+        if (await refreshSession()) {
+          try {
+            await reloadUser();
+          } catch {
+            setUser(null);
+          }
+        } else {
+          clearSessionMarker();
         }
       }
       setReady(true);
@@ -47,11 +67,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [reloadUser],
   );
 
+  const loginDemo = useCallback(async () => {
+    const tokens = await api.post<{ access_token: string }>("/auth/demo");
+    setAccessToken(tokens.access_token);
+    await reloadUser();
+  }, [reloadUser]);
+
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
     } finally {
       setAccessToken(null);
+      clearSessionMarker();
       setUser(null);
     }
   }, []);
@@ -59,7 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // UI-only convenience: the backend enforces every permission independently.
   const can = useCallback((permission: string) => !!user?.permissions.includes(permission), [user]);
 
-  const value = useMemo(() => ({ user, ready, login, logout, reloadUser, can }), [user, ready, login, logout, reloadUser, can]);
+  const value = useMemo(() => ({ user, ready, login, loginDemo, logout, reloadUser, can }),
+    [user, ready, login, loginDemo, logout, reloadUser, can]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

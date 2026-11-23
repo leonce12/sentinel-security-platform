@@ -40,6 +40,7 @@ class UserOut(ORMModel):
 class MeOut(UserOut):
     permissions: list[str]
     role_display_name: str
+    is_demo: bool = False
 
 
 class RegisterRequest(BaseModel):

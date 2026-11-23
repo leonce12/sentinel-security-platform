@@ -196,3 +196,30 @@ describe("components", () => {
     expect(screen.getByText("-")).toBeInTheDocument();
   });
 });
+
+describe("landing page and public demo", () => {
+  it("shows the landing page to visitors without calling refresh", async () => {
+    const calls = mockFetch(sessionRoutes(null));
+    renderApp(<App />, "/");
+    expect(await screen.findByRole("heading", { name: /Find the events that matter/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Explore the live demo" })).toBeInTheDocument();
+    expect(calls.some((c) => c.url.endsWith("/auth/refresh"))).toBe(false);
+  });
+
+  it("signs in to the read-only demo and hides profile editing", async () => {
+    let demo = false;
+    const viewer = { ...makeUser("viewer", VIEWER), username: "demo.viewer", is_demo: true };
+    mockFetch((url, init) => {
+      if (url.endsWith("/auth/demo")) { demo = true; return { body: { access_token: "demo", expires_in: 900 } }; }
+      if (url.endsWith("/auth/me") && demo) return { body: viewer };
+      return sessionRoutes(null)(url, init) ?? dashboardRoutes(viewer)(url, init);
+    });
+    renderApp(<App />, "/");
+    await userEvent.click(await screen.findByRole("button", { name: "Explore the live demo" }));
+    expect(await screen.findByRole("heading", { name: "Security overview" })).toBeInTheDocument();
+    expect(screen.getByText("Demo (read-only)")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("link", { name: /demo.viewer|viewer user/ }));
+    expect(await screen.findByRole("heading", { name: "Demo account" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Change password" })).not.toBeInTheDocument();
+  });
+});

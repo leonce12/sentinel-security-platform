@@ -37,10 +37,13 @@ export const ADMIN = [...ANALYST, "rules:manage", "intel:manage", "audit:read", 
 
 /** Routes for an already signed-in session (refresh succeeds, /auth/me returns the user). */
 export function sessionRoutes(user: Me | null): Route {
+  // The app only tries to restore a session when the non-secret marker cookie exists.
+  document.cookie = user ? "sentinel_session=1; path=/" : "sentinel_session=; Max-Age=0; path=/";
   return (url) => {
     if (url.endsWith("/auth/refresh")) return user ? { body: { access_token: "t", expires_in: 900 } } : { status: 401, body: { error: { code: "unauthorized", message: "No active session" } } };
     if (url.endsWith("/auth/me")) return { body: user };
     if (url.includes("/notifications/unread-count")) return { body: { count: 2 } };
+    if (url.endsWith("/auth/public-config")) return { body: { public_demo: true, registration_enabled: false } };
     return undefined;
   };
 }
