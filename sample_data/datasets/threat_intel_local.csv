@@ -1,0 +1,6 @@
+indicator,type,verdict,confidence,source,description,synthetic
+203.0.113.45,ip,malicious,0.9,synthetic-demo-feed,Synthetic feed: credential stuffing infrastructure,true
+198.51.100.23,ip,malicious,0.8,synthetic-demo-feed,Synthetic feed: password spraying source,true
+203.0.113.77,ip,suspicious,0.6,synthetic-demo-feed,Synthetic feed: scanning activity reported,true
+198.51.100.99,ip,suspicious,0.4,synthetic-demo-feed,Synthetic feed: low-confidence report,true
+192.0.2.200,ip,malicious,0.7,synthetic-demo-feed,Synthetic feed: command-and-control (not seen in demo logs),true

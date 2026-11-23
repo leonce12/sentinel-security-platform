@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest==9.1.1
+pytest-cov==7.1.0
+pypdf==6.17.0
+# Browser automation for e2e/ and scripts/capture_screenshots.py
+playwright==1.63.0
