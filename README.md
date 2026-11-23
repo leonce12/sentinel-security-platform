@@ -6,6 +6,10 @@ Sentinel is a defensive cybersecurity monitoring and threat detection platform f
 
 It is a working, self-contained SIEM-style application: a FastAPI backend, a PostgreSQL database and a React dashboard. It ingests security logs, normalizes them, runs ten transparent detection rules, scores every alert with a documented formula, groups related alerts into incidents and produces PDF reports. All of its core functions work offline with no API keys.
 
+**Live demo:** https://sentinel-security-platform.onrender.com (choose "Explore the live demo" for a read-only account; the free server can take up to a minute to wake after a quiet period)
+
+[![CI](https://github.com/soniaineza/sentinel-security-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/soniaineza/sentinel-security-platform/actions/workflows/ci.yml)
+
 ![Sentinel dashboard](docs/screenshots/dashboard.png)
 
 > All data shown in this repository and its screenshots is synthetic. Users are fictional, systems use the reserved `corp.example` domain and external addresses come from the RFC 5737 documentation ranges.
@@ -27,13 +31,14 @@ It is a working, self-contained SIEM-style application: a FastAPI backend, a Pos
 11. [Demonstration workflow](#demonstration-workflow)
 12. [Synthetic dataset](#synthetic-dataset)
 13. [Testing](#testing)
-14. [Security considerations](#security-considerations)
-15. [Known limitations](#known-limitations)
-16. [Future improvements](#future-improvements)
-17. [Contributing](#contributing)
-18. [License](#license)
+14. [Deployment](#deployment)
+15. [Security considerations](#security-considerations)
+16. [Known limitations](#known-limitations)
+17. [Future improvements](#future-improvements)
+18. [Contributing](#contributing)
+19. [License](#license)
 
-Further documentation lives in [`docs/`](docs): architecture, database design, detection rules, API reference, security design, a user guide, a technical learning guide with interview preparation, and the development report.
+Further documentation lives in [`docs/`](docs): architecture, database design, detection rules, API reference, security design, deployment, a user guide, a technical learning guide with interview preparation, and the development report.
 
 ---
 
@@ -255,29 +260,37 @@ The CSV also contains 3 invalid and 3 duplicate rows so the validation summary h
 
 | Suite | Command | Result at release |
 |-------|---------|-------------------|
-| Backend (pytest, real PostgreSQL, migrations included) | `cd backend && pytest` | 180 passed, 91% line coverage |
-| Frontend (Vitest + Testing Library) | `cd frontend && npm test` | 17 passed |
+| Backend (pytest, real PostgreSQL, migrations included) | `cd backend && pytest` | 199 passed |
+| Frontend (Vitest + Testing Library) | `cd frontend && npm test` | 19 passed |
 | Type checking | `cd frontend && npm run typecheck` | No errors |
 | Offline end-to-end (Playwright, isolated network) | `python e2e/offline_acceptance.py ...` | 18 of 18 steps passed |
-| Dependency audit | `pip-audit -r backend/requirements.txt`, `npm audit` | No known vulnerabilities |
+| Live site smoke test (landing, demo, every viewer page, refused admin pages, mobile, console) | `python e2e/smoke_public.py --base-url ...` | See [docs/live-smoke-results.md](docs/live-smoke-results.md) |
+| Security checks in CI | gitleaks (full history), pip-audit, bandit, npm audit | Run on every push |
 
 Backend tests need a PostgreSQL database; set `SENTINEL_TEST_DATABASE_URL` (default `postgresql+psycopg://sentinel:sentinel_dev@localhost:5432/sentinel_test`). The detection validation suite covers normal activity, suspicious activity, borderline thresholds, missing fields, duplicates, out-of-window events and a 50,000-event run. See [docs/development-report.md](docs/development-report.md) for what each suite covers.
+
+## Deployment
+
+The public site runs on free tiers: one **Render** web service (the root `Dockerfile` builds the React app and serves it from FastAPI on one HTTPS origin) and a **Neon** PostgreSQL database. `render.yaml` is a Render Blueprint: connect the repository, paste the Neon connection string and choose an administrator password when Render asks, and it builds, migrates, creates the administrator and loads the synthetic dataset. Secrets live only in Render's environment settings.
+
+Free-tier limits: the service sleeps after 15 idle minutes (about a minute to wake) and Neon pauses its compute after 5 idle minutes. Step-by-step instructions, the architecture and all deployment variables are in [docs/deployment.md](docs/deployment.md). Docker Compose remains available for running everything on one machine.
 
 ## Security considerations
 
 Sentinel is a defensive, educational platform. It contains no offensive, exploitation, credential harvesting or persistence functionality, and it should only be used with synthetic data or logs you are authorized to process.
 
-Controls built into the application include Argon2id password hashing and a password policy; 15-minute access tokens held in memory and rotating HttpOnly, SameSite=Strict refresh cookies with reuse detection; account lockout and rate limiting; role-based authorization checked on every endpoint (and tested by calling endpoints directly); parameterized queries and whitelisted sorting; upload size, type and record limits; CSV formula-injection protection; escaped PDF content; security headers and a strict CSP; generic error messages with request references; redaction of secrets from audit records; a database trigger that makes the audit log append-only; and AI output treated as untrusted text that cannot change records. Details and known limitations are in [SECURITY.md](SECURITY.md) and [docs/security-design.md](docs/security-design.md).
+Controls built into the application include Argon2id password hashing and a password policy; a read-only public demo account that has no usable password and cannot be modified; a hard request size limit enforced while the body streams in; 15-minute access tokens held in memory and rotating HttpOnly, SameSite=Strict refresh cookies with reuse detection; account lockout and rate limiting; role-based authorization checked on every endpoint (and tested by calling endpoints directly); parameterized queries and whitelisted sorting; upload size, type and record limits; CSV formula-injection protection; escaped PDF content; security headers and a strict CSP; generic error messages with request references; redaction of secrets from audit records; a database trigger that makes the audit log append-only; and AI output treated as untrusted text that cannot change records. Details and known limitations are in [SECURITY.md](SECURITY.md) and [docs/security-design.md](docs/security-design.md).
 
 ## Known limitations
 
-- Login rate limiting is in memory, so with several API workers each process counts separately (account lockout in the database still applies).
+- Login rate limiting is in memory, so with several API workers each process counts separately (account lockout in the database still applies). Per-account limits do not depend on the client address, so spoofed forwarding headers cannot bypass them.
+- The free hosting plans sleep when idle, so the first request after a quiet period is slow.
 - Detection runs synchronously after each upload. Very large files (the limit is 50,000 records) take seconds; there is no background queue.
 - Business hours are a single UTC window for the whole organization, not per user or per time zone.
 - The anomaly model is retrained on each run over recent history and is not persisted or evaluated against labelled attacks.
 - Rules see only what was ingested; there are no live collectors or agents.
 - Email notifications are not implemented; notifications are in-app only.
-- The Docker images were written and their runtime steps verified, but `docker compose up` itself was not run in the development environment (no Docker daemon was available). See the development report.
+- Docker images are built in CI on every push; `docker compose up` has not been run end to end on a workstation yet. See the development report.
 
 ## Future improvements
 

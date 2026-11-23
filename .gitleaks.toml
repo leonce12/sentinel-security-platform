@@ -1,0 +1,18 @@
+# Secret scanning configuration. Uses the default gitleaks rules; the allowlist only covers
+# throwaway values in tests and placeholders in documentation.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and documented placeholders"
+paths = [
+  '''backend/tests/''',
+  '''frontend/tests/''',
+  '''\.env\.example''',
+  '''frontend/package-lock\.json''',
+]
+regexes = [
+  '''replace-with-[a-z-]+''',
+  '''sentinel_ci''',
+  '''sentinel_dev''',
+]

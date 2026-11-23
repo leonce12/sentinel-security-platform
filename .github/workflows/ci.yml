@@ -10,13 +10,14 @@ permissions:
 
 jobs:
   backend:
+    name: Backend tests (PostgreSQL)
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: sentinel
-          POSTGRES_PASSWORD: sentinel_ci
+          POSTGRES_PASSWORD: sentinel_ci  # throwaway database that only exists during the job
           POSTGRES_DB: sentinel_test
         ports: ["5432:5432"]
         options: >-
@@ -34,12 +35,11 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements-dev.txt
       - run: pip install -r requirements-dev.txt
-      - name: Run backend tests (migrations, auth, RBAC, ingestion, detection, scoring, incidents, reports)
+      - name: Run backend tests (migrations, auth, RBAC, ingestion, detection, scoring, incidents, deployment)
         run: pytest --cov=app --cov-report=term-missing:skip-covered
-      - name: Dependency audit
-        run: pip install pip-audit && pip-audit -r requirements.txt || true
 
   frontend:
+    name: Frontend typecheck, tests and build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -55,5 +55,42 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - name: Dependency audit
-        run: npm audit --omit=dev --audit-level=high || true
+
+  security:
+    name: Security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # scan the whole history, not just the latest commit
+      - name: Secret scan (gitleaks, full history)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Python dependency audit
+        run: pip install pip-audit && pip-audit -r backend/requirements.txt
+      - name: Python static analysis (bandit, medium severity and above)
+        run: pip install bandit && bandit -r backend/app -ll
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: JavaScript dependency audit
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+  docker:
+    name: Deployment images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the single-service image used by Render
+        run: docker build -t sentinel:ci .
+      - name: Build the Docker Compose images
+        run: docker compose build
+        env:
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          SENTINEL_SECRET_KEY: ci-only-value-that-is-at-least-32-characters-long

@@ -4,7 +4,7 @@ time and stored with metadata and a SHA-256 hash so later copies can be verified
 import hashlib
 import io
 from datetime import UTC, date, datetime, time, timedelta
-from xml.sax.saxutils import escape  # nosec B406: used to escape output, never to parse XML
+from xml.sax.saxutils import escape  # nosec B406 (escapes PDF output; nothing is parsed)
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4

@@ -8,7 +8,8 @@ Sentinel is a defensive security monitoring platform built for learning and demo
 
 | Version | Supported |
 |---------|-----------|
-| 1.0.x | Yes |
+| 1.1.x | Yes |
+| 1.0.x | No (upgrade to 1.1) |
 
 ## Reporting a vulnerability
 
@@ -31,6 +32,10 @@ Please test only against your own local installation, never against systems you 
 - Append-only audit log enforced by a PostgreSQL trigger, with secrets redacted.
 - Secrets only in environment variables; startup refuses placeholder signing keys.
 - Optional external services are off by default and receive the minimum data required.
+- Public demo: a shared Read-Only Viewer account with no usable password; its profile and password cannot be changed and its role is reset to Viewer on every start.
+- Request bodies are capped while they stream in; per-account login limits do not depend on the client address.
+- Production mode adds HSTS, hides the interactive API docs and serves the web app with a same-origin Content Security Policy.
+- CI runs gitleaks over the full Git history, pip-audit, bandit and npm audit on every push.
 
 Full details: [docs/security-design.md](docs/security-design.md).
 

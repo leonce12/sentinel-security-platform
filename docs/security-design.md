@@ -26,7 +26,7 @@ Sentinel is a defensive monitoring and educational platform. It contains no func
 - **Password policy**: at least 12 characters, three character classes, must not contain the username. Enforced on create, change and reset.
 - **Uniform failure response**: unknown users and wrong passwords return the same message, and a dummy hash is verified for unknown users so response time does not reveal which usernames exist.
 - **Account lockout**: 5 failures lock the account for 15 minutes (stored in the database, so it works across processes).
-- **Rate limiting**: login (5 per minute per username and IP, 20 per minute per IP), refresh, registration and password change.
+- **Rate limiting**: login (5 per minute per username and IP, 20 per minute per IP, and 10 per minute per account whatever the client address, so rotating or spoofed `X-Forwarded-For` values cannot multiply attempts), refresh, demo sign-in, registration and password change.
 - **Tokens**: HS256 JWT access tokens valid 15 minutes, with required `exp`, `sub` and `type` claims and a fixed algorithm list (the `none` algorithm is rejected; tested). Tokens carry a password version, so changing or resetting a password invalidates every access token issued before (tested).
 - **Refresh tokens**: random 48-byte tokens stored only as SHA-256 hashes, rotated on every use, delivered as `HttpOnly`, `SameSite=Strict`, `Secure` (in production) cookies scoped to `/api/v1/auth`. Reuse of a revoked token revokes all of the user's sessions (tested).
 - **Frontend storage**: the access token lives in JavaScript memory only, never in localStorage or sessionStorage.
@@ -79,8 +79,18 @@ Sentinel is a defensive monitoring and educational platform. It contains no func
 - **Threat intelligence** lookups are off by default. When enabled, only the single public IP being checked is sent; private and reserved addresses are never sent (tested). Results are cached; unavailable results are not cached. Missing information is never treated as "safe".
 - **AI** is off by default and needs both a configured provider and an administrator toggle. The model receives a minimized JSON summary built from database fields (rule, score factors, entity lists, counts and at most five sanitized, truncated event descriptions marked `_untrusted`). Raw payloads are never sent. The system prompt states that untrusted fields are data, not instructions. Output must parse as the expected JSON shape and is sanitized and length-limited; otherwise the deterministic explanation is used. The AI has no tools and no code path from its output to any change in the database (tested: alert status is unchanged after an explanation request, and the demo dataset contains a prompt-injection line).
 
+### Public deployment and the demo account
+
+- The live site runs in production mode: HSTS, `Secure` cookies, no interactive API docs, and HTTPS from the hosting provider.
+- The web app is served by the API on the same origin with its own CSP (`script-src 'self'`, no inline scripts, `frame-ancestors 'none'`); API responses keep a CSP that allows nothing.
+- "Explore the live demo" calls `POST /auth/demo`, which exists only when `SENTINEL_PUBLIC_DEMO=true`. It signs the visitor in to a shared Viewer account whose password is random, never stored or shown, so the account cannot be used through the normal login. The demo account cannot change its profile or password (403), and on every start its role is reset to Viewer and it is reactivated, so even an administrator mistake does not leave it privileged. Demo sign-ins are rate limited and audited.
+- The first administrator is created from environment variables kept in the host's secret settings, only when no administrator exists; the password is never logged and the variable should be removed after the first sign-in.
+- A non-secret `sentinel_session=1` cookie tells the web app whether a session may exist, so first-time visitors do not trigger a 401. It carries no token.
+- Secret scanning: CI runs gitleaks over the entire Git history on every push. Before publication the history was also checked for private keys, provider tokens (GitHub, AWS, Google, Slack, Anthropic, OpenAI, Neon) and every password used during development: none were found.
+
 ### Availability
 
+- A hard request body limit (12 MB by default) enforced by middleware while the body streams in, using Content-Length when present and counting bytes for chunked requests.
 - Upload and record limits, pagination limits (max 200 per page), export limit (50,000 rows).
 - Database connections use `pool_pre_ping`; health endpoints (`/health`, `/health/ready`) support container health checks.
 - External calls have timeouts (10 seconds for intelligence, 30 for AI) and never block detection.
