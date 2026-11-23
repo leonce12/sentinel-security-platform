@@ -64,10 +64,11 @@ jobs:
         with:
           fetch-depth: 0  # scan the whole history, not just the latest commit
       - name: Secret scan (gitleaks, full history)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
+        # The official gitleaks image scans every commit in the repository. (The gitleaks
+        # GitHub Action scans only the pushed range, which fails on a repository's first push.)
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.3 \
+            git /repo --config /repo/.gitleaks.toml --redact --verbose --exit-code 1
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
