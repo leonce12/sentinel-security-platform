@@ -1,0 +1,7 @@
+# Reviewed gitleaks findings that are not secrets. Each entry is an exact fingerprint
+# (commit:file:rule:line), so any new finding, even in the same file, still fails CI.
+#
+# definitions.py lines 21 and 102 list the fields a detection rule needs, written as
+# "outcome=failure". The key=value form matches the generic API key pattern. Reviewed 2026-11-23.
+34b73eab6df921b654df64dcd828ac0c1fa8c471:backend/app/detection/definitions.py:generic-api-key:21
+34b73eab6df921b654df64dcd828ac0c1fa8c471:backend/app/detection/definitions.py:generic-api-key:102
